@@ -1,4 +1,4 @@
-# python-ultimaker-api
+# python-ultimaker-printer-api
 
 An Ultimaker Printer API Client implementation in Python
 
