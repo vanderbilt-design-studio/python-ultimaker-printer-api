@@ -37,27 +37,28 @@ Identity = namedtuple('Name', ['application', 'user'])
 
 
 class CredentialsDict(OrderedDict):
-    def __init__(self, credentials_filename):
+    def __init__(self, credentials_filename=None):
         self.credentials_filename = credentials_filename
-        with open(credentials_filename, 'a+') as credentials_file:
-            try:
-                credentials_file.seek(0)
-                credentials_json = json.load(credentials_file)
-            except Exception as e:
-                print(
-                    f'Exception in parsing credentials.json, pretending it is empty: {e}')
-                credentials_json = {}
-        guid: UUID
-        credentials: Credentials
-        for guid, credentials in credentials_json.items():
-            try:
-                # Convert json to a dictionary of field to value mappings
-                kwargs = dict([(field, credentials[field])
-                               for field in Credentials._fields])
-                self[UUID(guid)] = Credentials(**kwargs)
-            except Exception as e:
-                print(
-                    f'Exception in parsing the credentials instance in credentials.json with guid {guid}, skipping it: {e}')
+        if credentials_filename is not None:
+            with open(credentials_filename, 'a+') as credentials_file:
+                try:
+                    credentials_file.seek(0)
+                    credentials_json = json.load(credentials_file)
+                except Exception as e:
+                    print(
+                        f'Exception in parsing credentials.json, pretending it is empty: {e}')
+                    credentials_json = {}
+            guid: UUID
+            credentials: Credentials
+            for guid, credentials in credentials_json.items():
+                try:
+                    # Convert json to a dictionary of field to value mappings
+                    kwargs = dict([(field, credentials[field])
+                                for field in Credentials._fields])
+                    self[UUID(guid)] = Credentials(**kwargs)
+                except Exception as e:
+                    print(
+                        f'Exception in parsing the credentials instance in credentials.json with guid {guid}, skipping it: {e}')
 
     def save(self):
         credentials_json: Dict[str, str] = {}

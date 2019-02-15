@@ -56,6 +56,7 @@ def default_printer_mock() -> Printer:
     printer.get_auth_verify = Mock(return_value=True)
     printer.get_system_name = Mock(return_value=mock_name)
     printer.get_printer_status = Mock(return_value='idle')
+    printer.get_system_guid = Mock(return_value=mock_guid)
     return printer
 
 
@@ -99,6 +100,19 @@ class AlreadyHasCredentialsTest(unittest.TestCase):
         self.printer.post_auth_request.assert_not_called()
         self.printer.get_auth_check.assert_called_once()
 
+
+class SaveCredentialsTest(unittest.TestCase):
+    def setUp(self):
+        printer = default_printer_mock()
+        printer.get_credentials = Mock(return_value=mock_credentials)
+        self.printer = printer
+        self.credentials_dict = CredentialsDict()
+
+    def test_printer_saves_credentials(self):
+        self.printer.save_credentials(self.credentials_dict)
+        self.printer.get_credentials.assert_called_once()
+        self.printer.get_system_guid.assert_called_once()
+        self.assertDictEqual(self.credentials_dict, default_credentials_dict_mock())
 
 class UltimakerJsonTest(unittest.TestCase):
     def test_expected_json_is_produced_when_idle(self):
