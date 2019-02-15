@@ -90,12 +90,12 @@ class AcquireCredentialsTest(unittest.TestCase):
 class AlreadyHasCredentialsTest(unittest.TestCase):
     def setUp(self):
         printer = default_printer_mock()
-        printer.credentials = Mock(return_value=mock_credentials)
+        printer.get_credentials = Mock(return_value=mock_credentials)
         self.printer = printer
 
     def test_printer_is_authorized(self):
         self.assertTrue(self.printer.is_authorized())
-        self.printer.credentials.assert_called_once()
+        self.printer.get_credentials.assert_called_once()
         self.printer.post_auth_request.assert_not_called()
         self.printer.get_auth_check.assert_called_once()
 
@@ -103,7 +103,7 @@ class AlreadyHasCredentialsTest(unittest.TestCase):
 class UltimakerJsonTest(unittest.TestCase):
     def test_expected_json_is_produced_when_idle(self):
         printer = default_printer_mock()
-        printer.credentials = Mock(return_value=mock_credentials)
+        printer.get_credentials = Mock(return_value=mock_credentials)
         printer.get_camera_snapshot_uri = Mock(
             return_value=mock_camera_snapshot_uri
         )
@@ -122,7 +122,7 @@ class UltimakerJsonTest(unittest.TestCase):
 
     def test_expected_json_is_produced_when_errored(self):
         printer = default_printer_mock()
-        printer.credentials = Mock(return_value=mock_credentials)
+        printer.get_credentials = Mock(return_value=mock_credentials)
         printer.get_printer_status = generic_exception_raiser
         printer.get_print_job_state = Mock(return_value=mock_print_job_state)
         json = printer.into_ultimaker_json()
@@ -132,7 +132,7 @@ class UltimakerJsonTest(unittest.TestCase):
 
     def test_expected_json_is_produced_when_printing(self):
         printer = default_printer_mock()
-        printer.credentials = Mock(return_value=mock_credentials)
+        printer.get_credentials = Mock(return_value=mock_credentials)
         printer.get_printer_status = Mock(return_value='printing')
         printer.get_print_job_time_elapsed = Mock(
             return_value=mock_print_job_time_elapsed)
