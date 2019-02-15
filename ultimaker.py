@@ -3,7 +3,6 @@ from typing import Dict
 from zeroconf import ServiceInfo
 import requests
 from requests.auth import HTTPDigestAuth
-from config import ultimaker_application_name, ultimaker_user_name, ultimaker_credentials_filename
 import json
 from uuid import UUID
 import re
@@ -34,7 +33,7 @@ import base64
 Credentials = namedtuple('Credentials', ['id', 'key'])
 
 # An application/user name pair displayed on the printer when requesting authorization
-Identity = namedtuple('Name', ['application_name', 'user_name'])
+Identity = namedtuple('Name', ['application', 'user'])
 
 
 class CredentialsDict(OrderedDict):
@@ -93,11 +92,13 @@ class Printer():
         self.host = f'{address}:{port}'
         self.identity = identity
         self.credentials = credentials
-        self.guid = None
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
         self.set_credentials(credentials_json)
+
+    def save_credentials(self, credentials_dict: CredentialsDict):
+        credentials_dict[self.get_system_guid()] = self.get_credentials()
 
     def get_credentials(self) -> Credentials:
         if self.credentials is None:
@@ -111,11 +112,11 @@ class Printer():
         self.credentials = credentials
 
     def digest_auth(self) -> HTTPDigestAuth:
-        credentials = self.credentials()
+        credentials = self.get_credentials()
         return HTTPDigestAuth(credentials.id, credentials.key)
 
     def is_authorized(self) -> bool:
-        self.credentials()
+        self.get_credentials()
         return self.get_auth_check() == 'authorized'
 
     def into_ultimaker_json(self) -> Dict[str, str]:
@@ -158,7 +159,7 @@ class Printer():
 
     def post_auth_request(self) -> Dict:
         return requests.post(url=f"http://{self.host}/api/v1/auth/request",
-                             data={'application': ultimaker_application_name, 'user': ultimaker_user_name}).json()
+                             data={'application': self.identity.application, 'user': self.identity.user}).json()
 
     # Returns the response from an authorization check
     def get_auth_check(self) -> str:
