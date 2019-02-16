@@ -1,6 +1,6 @@
 # python-ultimaker-printer-api
 
-An Ultimaker Printer API Client implementation in Python derived from Swagger documentation and request testing
+An Ultimaker Printer API Client implementation in Python derived from Swagger documentation (see http://printer_ip/docs/api/) and request testing
 
 [![Build Status](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-api.svg?branch=master)](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-printer-api)
 
@@ -11,7 +11,7 @@ An Ultimaker Printer API Client implementation in Python derived from Swagger do
 from ultimaker import Printer, Identity, CredentialsDict
 IDENTITY = Identity('Application', 'Anonymous')
 IP = '192.168.1.18'
-PORT = 8080
+PORT = 80
 
 credentials_dict = CredentialsDict('credentials.json')
 
