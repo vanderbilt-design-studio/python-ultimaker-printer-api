@@ -5,7 +5,6 @@ import requests
 from requests.auth import HTTPDigestAuth
 import json
 from uuid import UUID
-import re
 from datetime import timedelta
 import base64
 
