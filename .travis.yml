@@ -4,7 +4,9 @@ matrix:
   - python: 3.6
 install:
 - pip install coveralls
-- pip install -r requirements.txt
+- pip install zeroconf
+- pip install requests
+- pip install uuid
 script:
 - coverage run --omit '/home/travis/virtualenv*' -m unittest -v
 after_success: coveralls
