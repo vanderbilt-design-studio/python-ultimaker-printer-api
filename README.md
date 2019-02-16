@@ -23,3 +23,7 @@ credentials_dict.save()
 printer.put_system_display_message("It's over, Anakin!", "Acquire high ground")
 
 ```
+
+## mDNS
+
+If your local network supports mDNS (some school/corproate networks disable it), printers can be automatically discovered with the zeroconf package.
