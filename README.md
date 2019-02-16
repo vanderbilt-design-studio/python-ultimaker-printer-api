@@ -1,6 +1,6 @@
 # python-ultimaker-printer-api
 
-An Ultimaker Printer API Client implementation in Python
+An Ultimaker Printer API Client implementation in Python derived from Swagger documentation and request testing
 
 [![Build Status](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-api.svg?branch=master)](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-printer-api)
 
