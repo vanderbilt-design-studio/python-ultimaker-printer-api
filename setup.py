@@ -24,6 +24,5 @@ setuptools.setup(
         "zeroconf",
         "requests",
         "uuid",
-        "base64"
     ],
 )
