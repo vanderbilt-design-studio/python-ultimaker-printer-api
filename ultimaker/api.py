@@ -95,7 +95,7 @@ class Printer():
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
-        self.set_credentials(credentials_json)
+        self.set_credentials(Credentials(**credentials_json))
 
     def save_credentials(self, credentials_dict: CredentialsDict):
         credentials_dict[self.get_system_guid()] = self.get_credentials()
