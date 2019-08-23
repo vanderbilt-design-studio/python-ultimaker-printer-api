@@ -169,7 +169,7 @@ class Printer():
     # Note that this is completely different from get_auth_check.
     def get_auth_verify(self) -> bool:
         return requests.get(
-            url=f"http://{self.host}/api/v1/auth/verify", auth=HTTPDigestAuth(self.credentials.id, self.credentials.key)).ok
+            url=f"http://{self.host}/api/v1/auth/verify", auth=HTTPDigestAuth(self.credentials.id, self.credentials.key)).status_code != 401
 
     def get_printer_status(self) -> str:
         return requests.get(
