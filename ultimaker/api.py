@@ -94,6 +94,7 @@ class Printer():
         self.credentials = credentials
         self.timeout = timeout
         self.name = None
+        self.guid = None
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
@@ -211,7 +212,9 @@ class Printer():
         return requests.put(url=f"http://{self.host}/api/v1/beep", auth=self.digest_auth(), json={'frequency': frequency, 'duration': duration}, timeout=self.timeout).json()
 
     def get_system_guid(self) -> UUID:
-        return UUID(requests.get(url=f'http://{self.host}/api/v1/system/guid', timeout=self.timeout).json())
+        if self.guid is None:
+            self.guid = UUID(requests.get(url=f'http://{self.host}/api/v1/system/guid', timeout=self.timeout).json())
+        return self.guid
 
     def get_system_name(self) -> str:
         self.name = requests.get(url=f'http://{self.host}/api/v1/system/name', timeout=self.timeout).json()
