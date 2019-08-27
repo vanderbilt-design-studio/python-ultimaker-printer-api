@@ -145,13 +145,16 @@ class Printer():
                     'snapshot': self.get_camera_snapshot_uri()
                 }
             return ultimaker_json
-        except Exception as e:
-            print(f'Exception while generating ultimaker json {e}')
+        except requests.exceptions.Timeout:
+            print(f'Timeout while generating ultimaker json')
             return {
                 'system': {
                     'name': self.get_system_name(),
                 },
             }
+        except requests.exceptions.RequestException as e:
+            print(f'Exception while generating ultimaker json {e}')
+            raise
 
     # All of the request functions below are from the Ultimaker Swagger Api available at http://PRINTER_ADDRESS/docs/api/
     # You can usually only call things other than /auth/check and /auth/request when you have credentials. As far as I've
