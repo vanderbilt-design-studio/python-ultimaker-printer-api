@@ -87,12 +87,13 @@ PrintJob = namedtuple('PrintJob', ['time_elapsed', 'time_total', 'datetime_start
 
 
 class Printer():
-    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None, timeout: float = 2.0):
+    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None, timeout: float = 0.5):
         self.address = address
         self.host = f'{address}:{port}'
         self.identity = identity
         self.credentials = credentials
         self.timeout = timeout
+        self.name = None
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
@@ -149,7 +150,7 @@ class Printer():
             print(f'Timeout while generating ultimaker json')
             return {
                 'system': {
-                    'name': self.get_system_name(),
+                    'name': self.name,
                 },
             }
         except requests.exceptions.RequestException as e:
@@ -213,7 +214,8 @@ class Printer():
         return UUID(requests.get(url=f'http://{self.host}/api/v1/system/guid', timeout=self.timeout).json())
 
     def get_system_name(self) -> str:
-        return requests.get(url=f'http://{self.host}/api/v1/system/name', timeout=self.timeout).json()
+        self.name = requests.get(url=f'http://{self.host}/api/v1/system/name', timeout=self.timeout).json()
+        return self.name
 
     def get_camera_snapshot_uri(self) -> str:
         res: requests.Response = requests.get(url=f'http://{self.address}:8080/?action=snapshot', timeout=self.timeout)
