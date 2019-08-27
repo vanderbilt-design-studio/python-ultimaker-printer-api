@@ -87,11 +87,12 @@ PrintJob = namedtuple('PrintJob', ['time_elapsed', 'time_total', 'datetime_start
 
 
 class Printer():
-    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None):
+    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None, timeout: float = 2.0):
         self.address = address
         self.host = f'{address}:{port}'
         self.identity = identity
         self.credentials = credentials
+        self.timeout = timeout
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
@@ -158,61 +159,59 @@ class Printer():
     # -------------------------------------------------------------------------------------------------------------------
 
     def post_auth_request(self) -> Dict:
-        return requests.post(url=f"http://{self.host}/api/v1/auth/request",
-                             data={'application': self.identity.application, 'user': self.identity.user}).json()
+        return requests.post(url=f"http://{self.host}/api/v1/auth/request", data={'application': self.identity.application, 'user': self.identity.user}, timeout=self.timeout).json()
 
     # Returns the response from an authorization check
     def get_auth_check(self) -> str:
-        return requests.get(url=f"http://{self.host}/api/v1/auth/check/{self.credentials.id}").json()['message']
+        return requests.get(url=f"http://{self.host}/api/v1/auth/check/{self.credentials.id}", timeout=self.timeout).json()['message']
 
     # Returns whether the credentials are known to the printer. They may not be if the printer was reset.
     # Note that this is completely different from get_auth_check.
     def get_auth_verify(self) -> bool:
         return requests.get(
-            url=f"http://{self.host}/api/v1/auth/verify", auth=HTTPDigestAuth(self.credentials.id, self.credentials.key)).status_code != 401
+            url=f"http://{self.host}/api/v1/auth/verify", auth=HTTPDigestAuth(self.credentials.id, self.credentials.key), timeout=self.timeout).status_code != 401
 
     def get_printer_status(self) -> str:
         return requests.get(
-            url=f"http://{self.host}/api/v1/printer/status", auth=self.digest_auth()).json()
+            url=f"http://{self.host}/api/v1/printer/status", auth=self.digest_auth(), timeout=self.timeout).json()
 
     def get_print_job(self) -> PrintJob:
         return PrintJob(**requests.get(
-            url=f"http://{self.host}/api/v1/print_job", auth=self.digest_auth()).json())
+            url=f"http://{self.host}/api/v1/print_job", auth=self.digest_auth(), timeout=self.timeout).json())
 
     def get_print_job_state(self) -> str:
         return requests.get(
-            url=f"http://{self.host}/api/v1/print_job/state", auth=self.digest_auth()).json()
+            url=f"http://{self.host}/api/v1/print_job/state", auth=self.digest_auth(), timeout=self.timeout).json()
 
     def get_print_job_time_elapsed(self) -> timedelta:
         return timedelta(seconds=requests.get(
-            url=f"http://{self.host}/api/v1/print_job/time_elapsed", auth=self.digest_auth()).json())
+            url=f"http://{self.host}/api/v1/print_job/time_elapsed", auth=self.digest_auth(), timeout=self.timeout).json())
 
     def get_print_job_time_total(self) -> timedelta:
         return timedelta(seconds=requests.get(
-            url=f"http://{self.host}/api/v1/print_job/time_total", auth=self.digest_auth()).json())
+            url=f"http://{self.host}/api/v1/print_job/time_total", auth=self.digest_auth(), timeout=self.timeout).json())
 
     def get_print_job_progress(self) -> float:
         return requests.get(
-            url=f"http://{self.host}/api/v1/print_job/progress", auth=self.digest_auth()).json()
+            url=f"http://{self.host}/api/v1/print_job/progress", auth=self.digest_auth(), timeout=self.timeout).json()
 
     def get_print_job_name(self) -> str:
         return requests.get(
-            url=f"http://{self.host}/api/v1/print_job/name", auth=self.digest_auth()).json()
+            url=f"http://{self.host}/api/v1/print_job/name", auth=self.digest_auth(), timeout=self.timeout).json()
 
     def put_system_display_message(self, message: str, button_caption: str) -> str:
-        return requests.put(url=f"http://{self.host}/api/v1/system/display_message", auth=self.digest_auth(), json={'message': message, 'button_caption': button_caption}).json()
+        return requests.put(url=f"http://{self.host}/api/v1/system/display_message", auth=self.digest_auth(), json={'message': message, 'button_caption': button_caption}, timeout=self.timeout).json()
 
     # Doesn't work as far as I've tested it
     def put_beep(self, frequency: float, duration: float) -> str:
-        return requests.put(url=f"http://{self.host}/api/v1/beep", auth=self.digest_auth(), json={'frequency': frequency, 'duration': duration}).json()
+        return requests.put(url=f"http://{self.host}/api/v1/beep", auth=self.digest_auth(), json={'frequency': frequency, 'duration': duration}, timeout=self.timeout).json()
 
     def get_system_guid(self) -> UUID:
-        return UUID(requests.get(url=f'http://{self.host}/api/v1/system/guid').json())
+        return UUID(requests.get(url=f'http://{self.host}/api/v1/system/guid', timeout=self.timeout).json())
 
     def get_system_name(self) -> str:
-        return requests.get(url=f'http://{self.host}/api/v1/system/name').json()
+        return requests.get(url=f'http://{self.host}/api/v1/system/name', timeout=self.timeout).json()
 
     def get_camera_snapshot_uri(self) -> str:
-        res: requests.Response = requests.get(
-            url=f'http://{self.address}:8080/?action=snapshot')
+        res: requests.Response = requests.get(url=f'http://{self.address}:8080/?action=snapshot', timeout=self.timeout)
         return f"data:{res.headers['Content-Type']};base64,{base64.b64encode(res.content).decode('utf-8')}"
