@@ -207,7 +207,7 @@ class Printer():
     def put_system_display_message(self, message: str, button_caption: str) -> str:
         return requests.put(url=f"http://{self.host}/api/v1/system/display_message", auth=self.digest_auth(), json={'message': message, 'button_caption': button_caption}, timeout=self.timeout).json()
 
-    # Doesn't work as far as I've tested it
+    # Frequency in Hz, duration in ms
     def put_beep(self, frequency: float, duration: float) -> str:
         return requests.put(url=f"http://{self.host}/api/v1/beep", auth=self.digest_auth(), json={'frequency': frequency, 'duration': duration}, timeout=self.timeout).json()
 
