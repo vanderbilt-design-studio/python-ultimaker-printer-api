@@ -137,14 +137,12 @@ class Printer():
                 }
             }
             if status == 'printing':
+                print_job: PrintJob = self.get_print_job()
                 ultimaker_json['print_job'] = {
-                    'time_elapsed': str(self.get_print_job_time_elapsed()),
-                    'time_total': str(self.get_print_job_time_total()),
-                    'progress': self.get_print_job_progress(),
-                    'state': self.get_print_job_state(),
-                }
-                ultimaker_json['camera'] = {
-                    'snapshot': self.get_camera_snapshot_uri()
+                    'time_elapsed': print_job.time_elapsed,
+                    'time_total': print_job.time_total,
+                    'progress': print_job.progress,
+                    'state': print_job.state
                 }
             return ultimaker_json
         except requests.exceptions.Timeout:
