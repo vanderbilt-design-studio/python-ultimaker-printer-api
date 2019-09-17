@@ -141,8 +141,8 @@ class Printer():
             if status == 'printing':
                 print_job: PrintJob = self.get_print_job()
                 ultimaker_json['print_job'] = {
-                    'time_elapsed': print_job.time_elapsed,
-                    'time_total': print_job.time_total,
+                    'time_elapsed': str(print_job.time_elapsed),
+                    'time_total': str(print_job.time_total),
                     'progress': print_job.progress,
                     'state': print_job.state
                 }
@@ -181,8 +181,10 @@ class Printer():
             url=f"http://{self.host}/api/v1/printer/status", auth=self.digest_auth(), timeout=self.timeout).json()
 
     def get_print_job(self) -> PrintJob:
-        return PrintJob(**requests.get(
-            url=f"http://{self.host}/api/v1/print_job", auth=self.digest_auth(), timeout=self.timeout).json())
+        print_job_dict: Dict = requests.get(url=f"http://{self.host}/api/v1/print_job", auth=self.digest_auth(), timeout=self.timeout).json()
+        for time_field in ['time_elapsed', 'time_total']:
+            print_job_dict[time_field] = timedelta(seconds=print_job_dict[time_field])
+        return PrintJob(**print_job_dict)
 
     def get_print_job_state(self) -> str:
         return requests.get(
