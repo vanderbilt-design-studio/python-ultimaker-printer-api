@@ -2,9 +2,9 @@
 
 An Ultimaker Printer API Client implementation in Python derived from Swagger documentation (see http://printer_ip/docs/api/) and request testing
 
-[![Build Status](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-api.svg?branch=master)](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-printer-api)
+[![Build Status](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-printer-api.svg?branch=master)](https://travis-ci.org/vanderbilt-design-studio/python-ultimaker-printer-api)
 
-[![Coverage Status](https://coveralls.io/repos/github/vanderbilt-design-studio/python-ultimaker-api/badge.svg?branch=master)](https://coveralls.io/github/vanderbilt-design-studio/python-ultimaker-printer-api?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/vanderbilt-design-studio/python-ultimaker-printer-api/badge.svg?branch=master)](https://coveralls.io/github/vanderbilt-design-studio/python-ultimaker-printer-api?branch=master)
 
 ## Usage
 ```python
