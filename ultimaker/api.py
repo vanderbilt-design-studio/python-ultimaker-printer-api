@@ -83,7 +83,9 @@ class CredentialsDict(OrderedDict):
 #   "state": "none"
 # }
 PrintJob = namedtuple('PrintJob', ['time_elapsed', 'time_total', 'datetime_started', 'datetime_finished',
-                                   'datetime_cleaned', 'source', 'source_user', 'source_application', 'name', 'uuid', 'reprint_original_uuid', 'state', 'progress', 'pause_source'])
+                                   'datetime_cleaned', 'source', 'source_user', 'source_application', 'name', 
+                                   'uuid', 'reprint_original_uuid', 'state', 'progress', 'pause_source',
+                                   'result'])
 
 
 class Printer():
