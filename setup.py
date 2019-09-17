@@ -9,7 +9,7 @@ setuptools.setup(
     version=__version__,
     author="Sameer Puri",
     author_email="purisame@spuri.io",
-    description="An Ultimaker Printer API Client implementation in Python",
+    description="An Ultimaker Printer API client implementation in Python",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/vanderbilt-design-studio/python-ultimaker-printer-api",
