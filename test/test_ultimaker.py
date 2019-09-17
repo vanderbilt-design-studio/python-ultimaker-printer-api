@@ -1,25 +1,45 @@
 import unittest
 from unittest.mock import Mock, patch
 import json
-from ultimaker import Printer, CredentialsDict, Credentials, Identity
+from ultimaker import Printer, CredentialsDict, Credentials, Identity, PrintJob
 from uuid import UUID, uuid4
 import os
 from datetime import timedelta
+from typing import Dict
+import requests
 
-mock_identity = Identity('mock application', 'mock user')
-mock_name = '2D Printer'
+mock_identity: str = Identity('mock application', 'mock user')
+mock_name: str = '2D Printer'
 mock_guid: UUID = uuid4()
-mock_address = '127.0.0.1'
-mock_port = '8080'
-mock_id = '1234'
-mock_key = 'abcd'
-mock_credentials = Credentials(mock_id, mock_key)
-mock_credentials_json = mock_credentials._asdict()
-mock_print_job_time_elapsed = timedelta(seconds=30)
-mock_print_job_time_total = timedelta(seconds=60)
-mock_print_job_progress = 30./60.
-mock_print_job_state = 'printing'
-mock_camera_snapshot_uri = 'data:image/png,base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJN\
+mock_address: str = '127.0.0.1'
+mock_port: str = '8080'
+mock_id: str = '1234'
+mock_key: str = 'abcd'
+mock_credentials: Credentials = Credentials(mock_id, mock_key)
+mock_credentials_json: Dict[str, str] = mock_credentials._asdict()
+mock_print_job_name: str = '3DBenchy'
+mock_print_job_time_elapsed: timedelta = timedelta(seconds=30)
+mock_print_job_time_total: timedelta = timedelta(seconds=60)
+mock_print_job_progress: float = 30./60.
+mock_print_job_state: str = 'printing'
+mock_print_job: PrintJob = PrintJob(**{
+    "datetime_cleaned": "",
+    "datetime_finished": "",
+    "datetime_started": "2019-09-17T18:01:32",
+    "name": mock_print_job_name,
+    "pause_source": "",
+    "progress": mock_print_job_progress,
+    "reprint_original_uuid": "",
+    "result": "",
+    "source": "WEB_API",
+    "source_application": "Cura Connect",
+    "source_user": "U2",
+    "state": mock_print_job_state,
+    "time_elapsed": mock_print_job_time_elapsed,
+    "time_total": mock_print_job_time_total,
+    "uuid": uuid4()
+})
+mock_camera_snapshot_uri: str = 'data:image/png,base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJN\
 AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAC01BMVEUAAAA4Oz0rLzVLTUhV\
 V04tMTYuMjckKTFNT0k9QED//8qGhWxdXlOMi295eWT//9CHQUgqLzQzNjpMMTqtMkUoMTUkMTUg\
 MTQvMTZbXVKWlHW3tYrDwZG8uo2gn3xtbl0AAAoAAAB8e2XEwJHPy5iQj3IoLDN9fGbGwpKSkHMA\
@@ -57,6 +77,9 @@ def default_printer_mock() -> Printer:
     printer.get_system_name = Mock(return_value=mock_name)
     printer.get_printer_status = Mock(return_value='idle')
     printer.get_system_guid = Mock(return_value=mock_guid)
+    printer.get_print_job = Mock(return_value=mock_print_job)
+    printer.name = mock_name
+    printer.guid = mock_guid
     return printer
 
 
@@ -112,7 +135,9 @@ class SaveCredentialsTest(unittest.TestCase):
         self.printer.save_credentials(self.credentials_dict)
         self.printer.get_credentials.assert_called_once()
         self.printer.get_system_guid.assert_called_once()
-        self.assertDictEqual(self.credentials_dict, default_credentials_dict_mock())
+        self.assertDictEqual(self.credentials_dict,
+                             default_credentials_dict_mock())
+
 
 class UltimakerJsonTest(unittest.TestCase):
     def test_expected_json_is_produced_when_idle(self):
@@ -134,10 +159,10 @@ class UltimakerJsonTest(unittest.TestCase):
             }
         }, json)
 
-    def test_expected_json_is_produced_when_errored(self):
+    def test_expected_json_is_produced_when_timeout(self):
         printer = default_printer_mock()
         printer.get_credentials = Mock(return_value=mock_credentials)
-        printer.get_printer_status = generic_exception_raiser
+        printer.get_printer_status = timeout_exception_raiser
         printer.get_print_job_state = Mock(return_value=mock_print_job_state)
         json = printer.into_ultimaker_json()
         self.assertDictEqual({'system': {
@@ -159,6 +184,7 @@ class UltimakerJsonTest(unittest.TestCase):
         printer.get_camera_snapshot_uri = Mock(
             return_value=mock_camera_snapshot_uri
         )
+        printer.get_print_job = Mock(return_value=mock_print_job)
 
         json = printer.into_ultimaker_json()
         self.assertDictEqual({
@@ -181,8 +207,10 @@ class UltimakerJsonTest(unittest.TestCase):
 
 
 def generic_exception_raiser():
-    raise Exception('An exception has occurred')
+    raise requests.exceptions.RequestException('An exception has occurred')
 
+def timeout_exception_raiser():
+    raise requests.exceptions.Timeout('An exception has occurred')
 
 class VerifiesLoadedCredentialsTest(unittest.TestCase):
     def setUp(self):
