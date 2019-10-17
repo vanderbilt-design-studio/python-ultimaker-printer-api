@@ -24,5 +24,7 @@ setuptools.setup(
         "zeroconf",
         "requests",
         "uuid",
+        "pillow",
+        "imagehash"
     ],
 )

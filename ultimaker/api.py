@@ -1,12 +1,16 @@
 from collections import namedtuple, OrderedDict
 from typing import Dict
+import json
+from datetime import timedelta
+import base64
+import io
 from zeroconf import ServiceInfo
 import requests
 from requests.auth import HTTPDigestAuth
-import json
 from uuid import UUID
-from datetime import timedelta
-import base64
+from PIL import Image
+import imagehash
+
 
 # The mDNS response looks like this:
 #   ServiceInfo(
@@ -97,6 +101,7 @@ class Printer():
         self.timeout = timeout
         self.name = None
         self.guid = None
+        self.camera_snapshot_uri = None
 
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
@@ -224,4 +229,8 @@ class Printer():
 
     def get_camera_snapshot_uri(self) -> str:
         res: requests.Response = requests.get(url=f'http://{self.address}:8080/?action=snapshot', timeout=self.timeout)
-        return f"data:{res.headers['Content-Type']};base64,{base64.b64encode(res.content).decode('utf-8')}"
+        image: Image = Image.open(io.BytesIO(res.content))
+        hash: imagehash.ImageHash = imagehash.phash(image)
+        if self.camera_snapshot_uri is None or hash != self.camera_snapshot_uri[1]:
+            self.camera_snapshot_uri = (f"data:{res.headers['Content-Type']};base64,{base64.b64encode(res.content).decode('utf-8')}", hash)
+        return self.camera_snapshot_uri[0]
