@@ -1,12 +1,14 @@
 language: python
 matrix:
   include:
-  - python: 3.6
+  - python: 3.7
 install:
 - pip install coveralls
 - pip install zeroconf
 - pip install requests
 - pip install uuid
+- pip install pillow
+- pip install imagehash
 script:
 - coverage run --omit '/home/travis/virtualenv*' -m unittest -v
 after_success: coveralls
