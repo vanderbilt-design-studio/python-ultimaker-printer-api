@@ -1,3 +1,3 @@
 from .api import Identity, Credentials, CredentialsDict, Printer, PrintJob
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'

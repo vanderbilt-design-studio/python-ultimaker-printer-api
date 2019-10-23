@@ -5,6 +5,7 @@ import json
 import datetime
 import base64
 import io
+import shelve
 
 from zeroconf import ServiceInfo
 import requests
@@ -96,7 +97,7 @@ class PrintJob(NamedTuple):
 
 
 class Printer():
-    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None, timeout: float = 0.5):
+    def __init__(self, address: str, port: int, identity: Identity, credentials: Credentials = None, timeout: float = 0.75):
         self.address = address
         self.host = f'{address}:{port}'
         self.identity = identity
@@ -109,9 +110,6 @@ class Printer():
     def acquire_credentials(self):
         credentials_json = self.post_auth_request()
         self.set_credentials(Credentials(**credentials_json))
-
-    def save_credentials(self, credentials_dict: CredentialsDict):
-        credentials_dict[self.get_system_guid()] = self.get_credentials()
 
     def get_credentials(self) -> Credentials:
         if self.credentials is None:
