@@ -1,9 +1,11 @@
-from collections import namedtuple, OrderedDict
+from typing import NamedTuple
+from collections import OrderedDict
 from typing import Dict
 import json
-from datetime import timedelta
+import datetime
 import base64
 import io
+
 from zeroconf import ServiceInfo
 import requests
 from requests.auth import HTTPDigestAuth
@@ -32,45 +34,19 @@ import imagehash
 #       }
 #   )
 
-# A user/password pair
-Credentials = namedtuple('Credentials', ['id', 'key'])
 
-# An application/user name pair displayed on the printer when requesting authorization
-Identity = namedtuple('Name', ['application', 'user'])
+class Credentials(NamedTuple):
+    '''A username/password pair used for HTTP Digest Authentication'''
+    id: str
+    key: str
+
+class Identity(NamedTuple):
+    '''An application/user name pair displayed on the printer when requesting authorization'''
+    application: str
+    user: str
 
 
-class CredentialsDict(OrderedDict):
-    def __init__(self, credentials_filename=None):
-        self.credentials_filename = credentials_filename
-        if credentials_filename is not None:
-            with open(credentials_filename, 'a+') as credentials_file:
-                try:
-                    credentials_file.seek(0)
-                    credentials_json = json.load(credentials_file)
-                except Exception as e:
-                    print(
-                        f'Exception in parsing credentials.json, pretending it is empty: {e}')
-                    credentials_json = {}
-            guid: UUID
-            credentials: Credentials
-            for guid, credentials in credentials_json.items():
-                try:
-                    # Convert json to a dictionary of field to value mappings
-                    kwargs = dict([(field, credentials[field])
-                                for field in Credentials._fields])
-                    self[UUID(guid)] = Credentials(**kwargs)
-                except Exception as e:
-                    print(
-                        f'Exception in parsing the credentials instance in credentials.json with guid {guid}, skipping it: {e}')
-
-    def save(self):
-        credentials_json: Dict[str, str] = {}
-        guid: UUID
-        credentials: Credentials
-        for guid, credentials in self.items():
-            credentials_json[guid.hex] = credentials._asdict()
-        with open(self.credentials_filename, 'w') as credentials_file:
-            json.dump(credentials_json, credentials_file)
+ULTIMAKER_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 # {
 #   "time_elapsed": 0,
@@ -86,10 +62,37 @@ class CredentialsDict(OrderedDict):
 #   "reprint_original_uuid": "string",
 #   "state": "none"
 # }
-PrintJob = namedtuple('PrintJob', ['time_elapsed', 'time_total', 'datetime_started', 'datetime_finished',
-                                   'datetime_cleaned', 'source', 'source_user', 'source_application', 'name', 
-                                   'uuid', 'reprint_original_uuid', 'state', 'progress', 'pause_source',
-                                   'result'])
+class PrintJob(NamedTuple):
+    time_elapsed: datetime.timedelta
+    time_total: datetime.timedelta
+    datetime_started: datetime.datetime
+    datetime_finished: datetime.datetime
+    datetime_cleaned: datetime.datetime
+    source: str
+    source_user: str
+    source_application: str
+    name: str
+    uuid: UUID
+    reprint_original_uuid: UUID
+    state: str
+    progress: float
+    pause_source: str
+    result: str
+
+    @classmethod
+    def parse(cls: 'PrintJob', dct: Dict) -> 'PrintJob':
+        print_job_dict = {}
+        for field, value in dct.items():
+            if field.startswith('time'):
+                print_job_dict[field] = datetime.timedelta(seconds=value)
+            elif field.startswith('datetime'):
+                print_job_dict[field] = datetime.datetime.strptime(dct[field], ULTIMAKER_DATETIME_FORMAT)
+            else: # Typecast
+                print_job_dict[field] = cls.__annotations__[field](value)
+        return PrintJob(**print_job_dict)
+    
+    def as_str_dict(self) -> Dict[str, str]:
+        return {field: str(value) for field, value in self._asdict().items()}
 
 
 class Printer():
@@ -145,12 +148,7 @@ class Printer():
             }
             if status == 'printing':
                 print_job: PrintJob = self.get_print_job()
-                ultimaker_json['print_job'] = {
-                    'time_elapsed': str(print_job.time_elapsed),
-                    'time_total': str(print_job.time_total),
-                    'progress': print_job.progress,
-                    'state': print_job.state
-                }
+                ultimaker_json['print_job'] = print_job.as_str_dict()
             return ultimaker_json
         except requests.exceptions.Timeout:
             print(f'Timeout while generating ultimaker json')
@@ -187,20 +185,18 @@ class Printer():
 
     def get_print_job(self) -> PrintJob:
         print_job_dict: Dict = requests.get(url=f"http://{self.host}/api/v1/print_job", auth=self.digest_auth(), timeout=self.timeout).json()
-        for time_field in ['time_elapsed', 'time_total']:
-            print_job_dict[time_field] = timedelta(seconds=print_job_dict[time_field])
-        return PrintJob(**print_job_dict)
+        return PrintJob.parse(print_job_dict)
 
     def get_print_job_state(self) -> str:
         return requests.get(
             url=f"http://{self.host}/api/v1/print_job/state", auth=self.digest_auth(), timeout=self.timeout).json()
 
-    def get_print_job_time_elapsed(self) -> timedelta:
-        return timedelta(seconds=requests.get(
+    def get_print_job_time_elapsed(self) -> datetime.timedelta:
+        return datetime.timedelta(seconds=requests.get(
             url=f"http://{self.host}/api/v1/print_job/time_elapsed", auth=self.digest_auth(), timeout=self.timeout).json())
 
-    def get_print_job_time_total(self) -> timedelta:
-        return timedelta(seconds=requests.get(
+    def get_print_job_time_total(self) -> datetime.timedelta:
+        return datetime.timedelta(seconds=requests.get(
             url=f"http://{self.host}/api/v1/print_job/time_total", auth=self.digest_auth(), timeout=self.timeout).json())
 
     def get_print_job_progress(self) -> float:
