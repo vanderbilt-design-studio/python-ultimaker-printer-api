@@ -42,9 +42,6 @@ from zeroconf import ServiceInfo
 from ultimaker import Printer, Credentials, Identity
 import imagehash
 
-from config import ultimaker_application_name, ultimaker_user_name, ultimaker_credentials_filename
-
-
 class PrinterListener:
 
   def __init__(self, credentials_dict: shelve.Shelf):
