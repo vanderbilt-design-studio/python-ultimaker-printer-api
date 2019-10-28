@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 import json
-from ultimaker import Printer, CredentialsDict, Credentials, Identity, PrintJob
+from ultimaker import Printer, Credentials, Identity, PrintJob
 from uuid import UUID, uuid4
 import os
 from datetime import timedelta
@@ -83,13 +83,6 @@ def default_printer_mock() -> Printer:
     return printer
 
 
-def default_credentials_dict_mock() -> CredentialsDict:
-    credentials_dict = CredentialsDict('/tmp/credentials.json')
-    credentials_dict[mock_guid] = Credentials(**mock_credentials_json)
-    credentials_dict.save = Mock()
-    return credentials_dict
-
-
 class AcquireCredentialsTest(unittest.TestCase):
     def setUp(self):
         printer = default_printer_mock()
@@ -122,21 +115,6 @@ class AlreadyHasCredentialsTest(unittest.TestCase):
         self.printer.get_credentials.assert_called_once()
         self.printer.post_auth_request.assert_not_called()
         self.printer.get_auth_check.assert_called_once()
-
-
-class SaveCredentialsTest(unittest.TestCase):
-    def setUp(self):
-        printer = default_printer_mock()
-        printer.get_credentials = Mock(return_value=mock_credentials)
-        self.printer = printer
-        self.credentials_dict = CredentialsDict()
-
-    def test_printer_saves_credentials(self):
-        self.printer.save_credentials(self.credentials_dict)
-        self.printer.get_credentials.assert_called_once()
-        self.printer.get_system_guid.assert_called_once()
-        self.assertDictEqual(self.credentials_dict,
-                             default_credentials_dict_mock())
 
 
 class UltimakerJsonTest(unittest.TestCase):
@@ -224,50 +202,6 @@ class VerifiesLoadedCredentialsTest(unittest.TestCase):
         self.assertTrue(self.printer.credentials is not None)
         self.printer.post_auth_request.assert_called_once()
         self.printer.get_auth_verify.assert_called_once()
-
-
-class CredentialsDictTest(unittest.TestCase):
-    def setUp(self):
-        self.credentials_dict_json = {mock_guid.hex: mock_credentials_json}
-        random_filename = f'/tmp/credentials_{uuid4()}.json'
-        with open(random_filename, 'w+') as credentials_file:
-            json.dump(self.credentials_dict_json, credentials_file)
-        self.credentials_dict = CredentialsDict(random_filename)
-
-    def test_credentials_file_loads_correctly(self):
-        self.assertTrue(mock_guid in self.credentials_dict)
-        self.assertDictEqual(mock_credentials_json,
-                             self.credentials_dict[mock_guid]._asdict())
-
-    def test_credentials_file_saves_correctly(self):
-        self.credentials_dict.save()
-        with open(self.credentials_dict.credentials_filename, 'r') as credentials_file:
-            saved_json = json.load(credentials_file)
-        self.assertDictEqual(self.credentials_dict_json, saved_json)
-
-    def tearDown(self):
-        os.remove(self.credentials_dict.credentials_filename)
-
-
-class CredentialsDictEdgeCaseTest(unittest.TestCase):
-    def test_credentials_file_loads_empty_when_json_completely_invalid(self):
-        invalid_json_credentials_dict = CredentialsDict(
-            f'/tmp/credentials_{uuid4()}.json')
-        self.assertDictEqual(invalid_json_credentials_dict, {})
-        os.remove(invalid_json_credentials_dict.credentials_filename)
-
-    def test_credentials_file_loads_some_when_json_partially_invalid(self):
-        partially_valid_json_filename = f'/tmp/credentials_{uuid4()}.json'
-        with open(partially_valid_json_filename, 'w') as credentials_file:
-            json.dump({mock_guid.hex: mock_credentials_json,
-                       uuid4().hex: 'invalid'}, credentials_file)
-        partially_valid_json_credentials_dict = CredentialsDict(
-            partially_valid_json_filename)
-        self.assertTrue(
-            mock_guid in partially_valid_json_credentials_dict)
-        self.assertDictEqual(
-            mock_credentials_json, partially_valid_json_credentials_dict[mock_guid]._asdict())
-        os.remove(partially_valid_json_credentials_dict.credentials_filename)
 
 
 if __name__ == '__main__':
