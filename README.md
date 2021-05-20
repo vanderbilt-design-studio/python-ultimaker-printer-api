@@ -6,6 +6,10 @@ An Ultimaker Printer API Client implementation in Python derived from Swagger do
 
 [![Coverage Status](https://coveralls.io/repos/github/vanderbilt-design-studio/python-ultimaker-printer-api/badge.svg?branch=master)](https://coveralls.io/github/vanderbilt-design-studio/python-ultimaker-printer-api?branch=master)
 
+## Demo
+
+See https://github.com/vanderbilt-design-studio/poller-pi/blob/master/printers.py. This powers printer feed retrieval for https://vanderbilt.design/ (scroll down to the bottom)
+
 ## Usage
 ```python
 from ultimaker import Printer, Identity, CredentialsDict
